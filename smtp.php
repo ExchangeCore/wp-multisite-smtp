@@ -56,12 +56,12 @@ class Multisite_SMTP {
      */
     protected function prepare_settings() {
         $this->validations = new stdClass;
-        $this->validations->required = array('GLOBAL_SMTP_HOST','GLOBAL_SMTP_USER','GLOBAL_SMTP_PASSWORD');
+        $this->validations->required = array('GLOBAL_SMTP_HOST');
         $this->validations->is_email = array('GLOBAL_SMTP_RETURN_PATH','GLOBAL_SMTP_FROM','GLOBAL_SMTP_REPLYTO_FROM');
         $this->validations->not_empty = array('GLOBAL_SMTP_FROM','GLOBAL_SMTP_FROM_NAME');
         $this->validations->is_int = array('GLOBAL_SMTP_PORT','GLOBAL_SMTP_TIMEOUT');
         $this->validations->should_be = array('GLOBAL_SMTP_SECURE' => array('ssl','tls','none'),
-            'GLOBAL_SMTP_AUTH_TYPE' => array('LOGIN','PLAIN','NTLM') );
+            'GLOBAL_SMTP_AUTH_TYPE' => array('LOGIN','PLAIN','NTLM', 'NONE') );
 
         //Assume any undefined settings
         $assume = array(
@@ -129,19 +129,23 @@ class Multisite_SMTP {
 
         //preset
         $phpmailer->Mailer = "smtp";
-        $phpmailer->SMTPAuth = true;
+        if (GLOBAL_SMTP_AUTH_TYPE === 'NONE') {
+            $phpmailer->SMTPAuth = false;
+        } else {
+            $phpmailer->SMTPAuth = true;
+            $phpmailer->Username = GLOBAL_SMTP_USER;
+            $phpmailer->Password = GLOBAL_SMTP_PASSWORD;
+            $phpmailer->AuthType = GLOBAL_SMTP_AUTH_TYPE;
+        }
 
         //required
         $phpmailer->Host = GLOBAL_SMTP_HOST;
-        $phpmailer->Username = GLOBAL_SMTP_USER;
-        $phpmailer->Password = GLOBAL_SMTP_PASSWORD;
 
         //assumed
         $phpmailer->From = GLOBAL_SMTP_FROM;
         $phpmailer->FromName = GLOBAL_SMTP_FROM_NAME;
         $phpmailer->Port = GLOBAL_SMTP_PORT;
         $phpmailer->SMTPSecure = GLOBAL_SMTP_SECURE;
-        $phpmailer->AuthType = GLOBAL_SMTP_AUTH_TYPE;
 
         //Optional
         $phpmailer->Sender = defined('GLOBAL_SMTP_RETURN_PATH') ? GLOBAL_SMTP_RETURN_PATH : GLOBAL_SMTP_FROM;
